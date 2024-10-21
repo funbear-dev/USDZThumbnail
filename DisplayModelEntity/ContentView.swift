@@ -15,7 +15,7 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                ARViewContainer(viewModel: viewModel)
+                ARViewContainer(arView: viewModel.arView)
                     .edgesIgnoringSafeArea(.all)
                 
                 if !viewModel.modelLoaded {
@@ -27,9 +27,29 @@ struct ContentView: View {
             .background(Color.black.opacity(0.1))
             .onDrop(of: [UTType.usdz], isTargeted: nil) { providers -> Bool in
                 guard let provider = providers.first else { return false }
-                provider.loadObject(ofClass: URL.self) { url, error in
-                    if let url = url {
-                        viewModel.loadModel(from: url)
+                provider.loadFileRepresentation(forTypeIdentifier: UTType.usdz.identifier) { url, error in
+                    guard let url = url else {
+                        print("No URL provided from drop")
+                        return
+                    }
+                    if let error = error {
+                        print("Error loading dropped file: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    // Create a copy of the file in a temporary directory
+                    let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
+                    do {
+                        if FileManager.default.fileExists(atPath: tempURL.path) {
+                            try FileManager.default.removeItem(at: tempURL)
+                        }
+                        try FileManager.default.copyItem(at: url, to: tempURL)
+                        
+                        Task {
+                            await viewModel.loadModel(from: tempURL)
+                        }
+                    } catch {
+                        print("Error copying file: \(error.localizedDescription)")
                     }
                 }
                 return true
@@ -51,43 +71,40 @@ struct ContentView: View {
 
 class ViewModel: ObservableObject {
     @Published var modelLoaded = false
-    var arView: ARView?
+    let arView: ARView
     private var entity: Entity?
-    private var initialEntityTransform: Transform?
     
     init() {
-        setupARView()
-    }
-    
-    private func setupARView() {
-        let arView = ARView(frame: .zero)
+        arView = ARView(frame: .zero)
         arView.environment.background = .color(.clear)
-        self.arView = arView
     }
     
-    func loadModel(from url: URL) {
-        Task { @MainActor in
-            do {
-                let model = try await Entity.init(contentsOf: url)
-                
-                // Remove existing entities
-                arView?.scene.anchors.removeAll()
-                
-                // Add the new entity
-                let anchor = AnchorEntity(world: .zero)
-                anchor.addChild(model)
-                arView?.scene.addAnchor(anchor)
-                
-                // Position the model in front of the camera
-                model.position = [0, 0, -2]
-                model.scale = [0.5, 0.5, 0.5]  // Adjust scale if needed
-                
-                self.entity = model
-                self.initialEntityTransform = model.transform
-                self.modelLoaded = true
-            } catch {
-                print("Failed to load model: \(error.localizedDescription)")
-            }
+    @MainActor
+    func loadModel(from url: URL) async {
+        print("Attempting to load model from: \(url.path)")
+        do {
+            let entity = try await ModelEntity(contentsOf: url)
+            
+            print("Model loaded successfully")
+            
+            // Remove existing entities
+            arView.scene.anchors.removeAll()
+            
+            // Add the new entity
+            let anchor = AnchorEntity(world: .zero)
+            anchor.addChild(entity)
+            arView.scene.addAnchor(anchor)
+            
+            // Position the model in front of the camera
+            entity.position = [0, 0, -1]
+            entity.scale = [0.8, 0.8, 0.8]  // Adjust scale here
+            
+            self.entity = entity
+            self.modelLoaded = true
+            
+            print("Model added to scene")
+        } catch {
+            print("Failed to load model: \(error.localizedDescription)")
         }
     }
     
@@ -96,7 +113,7 @@ class ViewModel: ObservableObject {
         
         if NSEvent.modifierFlags.contains(.option) {
             // Pan (translate) the model
-            entity.position += SIMD3<Float>(Float(translation.width) * 0.01, -Float(translation.height) * 0.01, 0)
+            entity.position += SIMD3<Float>(Float(translation.width) * 0.001, -Float(translation.height) * 0.001, 0)
         } else if NSEvent.modifierFlags.contains(.command) {
             // Rotate the model
             entity.orientation *= simd_quatf(angle: Float(translation.width) * 0.01, axis: [0, 1, 0])
@@ -107,21 +124,19 @@ class ViewModel: ObservableObject {
     func handleScrollWheel(with event: NSEvent) {
         guard let entity = entity else { return }
         
-        let zoomFactor = 1 + Float(event.deltaY) * 0.01
+        let zoomFactor = 1 + Float(event.deltaY) * 0.001
         entity.scale *= SIMD3<Float>(zoomFactor, zoomFactor, zoomFactor)
     }
 }
 
 struct ARViewContainer: NSViewRepresentable {
-    @ObservedObject var viewModel: ViewModel
+    let arView: ARView
     
     func makeNSView(context: Context) -> ARView {
-        return viewModel.arView ?? ARView(frame: .zero)
+        return arView
     }
     
-    func updateNSView(_ nsView: ARView, context: Context) {
-        // Update the view if needed
-    }
+    func updateNSView(_ nsView: ARView, context: Context) {}
 }
 
 #Preview {
