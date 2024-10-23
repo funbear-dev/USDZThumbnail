@@ -31,6 +31,10 @@ class InteractiveARView: ARView {
     required init?(coder decoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    override var acceptsFirstResponder: Bool {
+        return true
+    }
 
     private func setupCamera() {
         let camera = PerspectiveCamera()
@@ -49,11 +53,11 @@ class InteractiveARView: ARView {
         cameraAnchor.look(at: target, from: cameraAnchor.position, relativeTo: nil)
     }
 
-    public func resetCamera() {
-        radius = defaultRadius ?? 2.0
-        azimuth = 0.0
+    func resetCamera() {
+        radius = defaultRadius ?? 6.0
+        azimuth = .pi / 4
         elevation = .pi / 6
-        target = .zero
+        target = [0, 0, -2]
         updateCameraPosition()
     }
     
@@ -81,25 +85,20 @@ class InteractiveARView: ARView {
     }
 
     override func mouseDragged(with event: NSEvent) {
-        
         let location = convert(event.locationInWindow, from: nil)
         let deltaX = Float(location.x - lastMouseLocation.x)
         let deltaY = Float(location.y - lastMouseLocation.y)
         lastMouseLocation = location
-
-        // Check for modifier keys
+        
         let commandKeyPressed = event.modifierFlags.contains(.command)
         let optionKeyPressed = event.modifierFlags.contains(.option)
-
+        
         if commandKeyPressed {
-            // Pan the camera
-            panCamera(deltaX: deltaX, deltaY: deltaY)
+            panCamera(deltaX: -deltaX, deltaY: -deltaY)  // Inverted both deltas
         } else if optionKeyPressed {
-            // Zoom the camera
-            zoomCamera(deltaY: deltaY)
+            zoomCamera(deltaY: -deltaY)  // Inverted deltaY
         } else {
-            // Rotate the camera around the model
-            rotateCamera(deltaX: deltaX, deltaY: deltaY)
+            rotateCamera(deltaX: deltaX, deltaY: deltaY)  // Keep as is for standard orbit controls
         }
     }
 
@@ -107,49 +106,42 @@ class InteractiveARView: ARView {
     // MARK: - Interaction Methods
 
     private func rotateCamera(deltaX: Float, deltaY: Float) {
-        
-        // Adjust the azimuth and elevation angles
         let sensitivity: Float = 0.005
-        azimuth -= deltaX * sensitivity
-        elevation += deltaY * sensitivity
-
-        // Clamp elevation to avoid flipping over the top
-        let maxElevation = Float.pi / 2 - 0.01  // Just below 90 degrees
-        let minElevation = -Float.pi / 2 + 0.01 // Just above -90 degrees
+        azimuth -= deltaX * sensitivity  // Keep negative for natural rotation
+        elevation += deltaY * sensitivity // Keep positive for natural up/down
+        
+        let maxElevation = Float.pi / 2 - 0.01
+        let minElevation = -Float.pi / 2 + 0.01
         elevation = max(min(elevation, maxElevation), minElevation)
-
+        
         updateCameraPosition()
     }
 
     private func panCamera(deltaX: Float, deltaY: Float) {
-        
-        // Pan the camera by adjusting the target position
         let sensitivity: Float = 0.002
-
-        // Calculate right and up vectors relative to the current camera orientation
-        let right = SIMD3<Float>(-sin(azimuth - Float.pi / 2), 0, -cos(azimuth - Float.pi / 2)) // Reverse direction for correct panning
+        // Calculate right vector based on current camera orientation
+        let right = SIMD3<Float>(sin(azimuth - Float.pi / 2), 0, cos(azimuth - Float.pi / 2))  // Removed negative
         let up = SIMD3<Float>(0, 1, 0)
-
-        let panOffset = (deltaX * sensitivity) * right + (-deltaY * sensitivity) * up // Reverse deltaY
-
+        
+        // Apply movement - deltaX moves along right vector, deltaY moves along up vector
+        let panOffset = (deltaX * sensitivity) * right + (deltaY * sensitivity) * up
         target += panOffset
-
+        
         updateCameraPosition()
     }
 
 
     private func zoomCamera(deltaY: Float) {
         let sensitivity: Float = 0.01
-        
-        // If defaultRadius is set, ensure it is only set once when model is loaded
         if defaultRadius == nil {
             defaultRadius = radius
         }
-
-        // Adjust the radius based on zoom input without limiting the minimum zoom level
+        
+        // Allow much closer zoom for detailed inspection
         radius += deltaY * sensitivity
-        radius = max(radius, 0.1) // Prevent the camera from zooming into negative space but allow very close zooming
-
+        radius = max(radius, 0.1)  // Allow very close zoom
+        radius = min(radius, 15.0) // Reasonable maximum distance
+        
         updateCameraPosition()
     }
 }
