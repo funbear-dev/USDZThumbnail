@@ -33,14 +33,10 @@ class InteractiveARView: ARView {
     }
 
     private func setupCamera() {
-        print("setupCamera: Initializing camera")
         let camera = PerspectiveCamera()
-        camera.camera.fieldOfViewInDegrees = 60
-        radius = 2.0
         updateCameraPosition()
         cameraAnchor.addChild(camera)
         self.scene.addAnchor(cameraAnchor)
-        print("setupCamera: Camera setup complete")
     }
 
     func updateCameraPosition() {
@@ -49,7 +45,6 @@ class InteractiveARView: ARView {
         let z = target.z + radius * cos(elevation) * cos(azimuth)
         
         let cameraPosition = SIMD3<Float>(x, y, z)
-        print("updateCameraPosition: Setting camera to position \(cameraPosition)")
         cameraAnchor.position = cameraPosition
         cameraAnchor.look(at: target, from: cameraAnchor.position, relativeTo: nil)
     }

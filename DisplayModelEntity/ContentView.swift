@@ -10,24 +10,19 @@ import RealityKit
 import UniformTypeIdentifiers
 
 struct ContentView: View {
-    
     @State private var usdzURL: URL?
     @State private var arView: ARView?
-    //    @State private var lightingMode: LightingMode = .day
     @State private var cameraState: CameraState?
     
     var body: some View {
         GeometryReader { geometry in
-            
             let sideLength = min(geometry.size.width, geometry.size.height)
             if usdzURL != nil {
-                
                 RealityKitView(usdzURL: $usdzURL, arView: $arView)
                     .frame(width: sideLength, height: sideLength)
                     .clipped()
                     .position(x: sideLength / 2, y: sideLength / 2)
             } else {
-                
                 VStack {
                     Spacer()
                     Image(systemName: "photo.badge.plus")
@@ -41,17 +36,9 @@ struct ContentView: View {
                 .position(x: sideLength / 2, y: sideLength / 2)
             }
         }
-//        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .frame(idealHeight: 0.8, alignment: .center)
-//        .onAppear {
-            // ...
-//        }
         .onDrop(of: ["public.file-url"], isTargeted: nil, perform: handleDrop)
     }
-
-    
-    
-    // MARK: - Functions
     
     func handleDrop(providers: [NSItemProvider]) -> Bool {
         guard let provider = providers.first else { return false }
@@ -61,20 +48,15 @@ struct ContentView: View {
                 if let urlData = urlData as? Data,
                    let url = URL(dataRepresentation: urlData, relativeTo: nil),
                    url.pathExtension.lowercased() == "usdz" {
-                    // Save the current camera state
                     if let arView = arView as? InteractiveARView {
                         self.cameraState = arView.getCameraState()
                     }
-                    
-                    // Update the usdzURL to load the new model
                     self.usdzURL = url
                 }
             }
         }
         return true
     }
-    
-
 }
 
 struct KeyHint: View {
