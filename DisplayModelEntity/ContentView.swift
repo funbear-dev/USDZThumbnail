@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var cameraState: CameraState?
     @State private var modelDimensions: ModelDimensions?
     
+    @AppStorage("saveCameraPosition") private var saveCameraPosition = false
+    
     var body: some View {
         GeometryReader { geometry in
             HStack(alignment: .top, spacing: 0) {
@@ -73,25 +75,21 @@ struct ContentView: View {
                 if let urlData = urlData as? Data,
                    let url = URL(dataRepresentation: urlData, relativeTo: nil),
                    url.pathExtension.lowercased() == "usdz" {
+                    // Save current camera state if enabled
                     if let arView = arView as? InteractiveARView {
-                        self.cameraState = arView.getCameraState()
+                        if saveCameraPosition {
+                            let state = arView.getCameraState()
+                            CameraStateManager.shared.saveState(state)
+                        }
                     }
                     
-                    // Set initial dimensions with just the filename
                     self.modelDimensions = ModelDimensions(
                         filename: url.lastPathComponent,
                         height: 0,
                         diameter: 0
                     )
                     
-                    // Update URL after dimensions are initialized
                     self.usdzURL = url
-                    
-                    // Ensure the window is key and front after drop
-                    if let window = NSApp.windows.first(where: { $0.isVisible }) {
-                        window.makeKey()
-                        window.orderFront(nil)
-                    }
                 }
             }
         }

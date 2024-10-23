@@ -89,13 +89,20 @@ class Coordinator {
             
             // Update camera to frame the model
             if let interactiveARView = arView as? InteractiveARView {
-                let initialRadius: Float = 6.0
-                interactiveARView.defaultRadius = initialRadius
-                interactiveARView.radius = initialRadius
-                interactiveARView.elevation = .pi / 6
-                interactiveARView.azimuth = .pi / 4
-                interactiveARView.target = [0, 0, -viewSize/2]
-                interactiveARView.updateCameraPosition()
+                // Check if we should use saved camera position
+                if UserDefaults.standard.bool(forKey: "saveCameraPosition"),
+                   let savedState = CameraStateManager.shared.loadState() {
+                    interactiveARView.setCameraState(savedState)
+                } else {
+                    // Use default camera position
+                    let initialRadius: Float = 6.0
+                    interactiveARView.defaultRadius = initialRadius
+                    interactiveARView.radius = initialRadius
+                    interactiveARView.elevation = .pi / 6
+                    interactiveARView.azimuth = .pi / 4
+                    interactiveARView.target = [0, 0, -viewSize/2]
+                    interactiveARView.updateCameraPosition()
+                }
             }
             
         } catch {

@@ -11,26 +11,36 @@ struct ModelDetails: View {
     let filename: String
     let height: Float
     let diameter: Float
+    @AppStorage("saveCameraPosition") private var saveCameraPosition = false
     
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Model Details")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            DetailItem(label: "Filename", value: filename)
-            DetailItem(
-                label: "Height",
-                value: String(format: "%.3f", height)
-            )
-            DetailItem(
-                label: "Diameter",
-                value: String(format: "%.3f", diameter)
-            )
+            // Model Details section
+            Group {
+                Text("Model Details")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                DetailItem(label: "Filename", value: filename)
+                DetailItem(label: "Height", value: String(format: "%.3f m", height))
+                DetailItem(label: "Diameter", value: String(format: "%.3f m", diameter))
+            }
             
             Spacer()
+            
+            // Settings section
+            Group {
+                Divider()
+                
+                Text("Settings")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Toggle("Save Camera Position", isOn: $saveCameraPosition)
+                    .font(.caption)
+            }
         }
         .padding()
         .frame(maxHeight: .infinity)
