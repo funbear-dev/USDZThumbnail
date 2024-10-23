@@ -10,82 +10,91 @@ import RealityKit
 import UniformTypeIdentifiers
 
 struct ContentView: View {
-    @StateObject private var viewModel = ViewModel()
+    
+    @State private var usdzURL: URL?
+    @State private var arView: ARView?
+    //    @State private var lightingMode: LightingMode = .day
+    @State private var cameraState: CameraState?
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                ARViewContainer(arView: viewModel.arView)
-                    .edgesIgnoringSafeArea(.all)
+            
+            let sideLength = min(geometry.size.width, geometry.size.height)
+            if usdzURL != nil {
                 
-                if !viewModel.modelLoaded {
-                    VStack {
-                        Spacer()
-                        Image(systemName: "photo.badge.plus")
-                            .font(.system(size: 50))
-                        Text("Drag & Drop a USDZ file here...")
-                            .padding()
-                        Spacer()
-                    }
+                RealityKitView(usdzURL: $usdzURL, arView: $arView)
+                    .frame(width: sideLength, height: sideLength)
+                    .clipped()
+                    .position(x: sideLength / 2, y: sideLength / 2)
+            } else {
+                
+                VStack {
+                    Spacer()
+                    Image(systemName: "photo.badge.plus")
+                        .font(.system(size: 50))
+                    Text("Drag & Drop a USDZ file here...")
+                        .padding()
+                    Spacer()
                 }
+                .frame(width: sideLength, height: sideLength)
+                .background(Color.secondary.opacity(0.1))
+                .position(x: sideLength / 2, y: sideLength / 2)
             }
-            .frame(width: min(geometry.size.width, geometry.size.height),
-                   height: min(geometry.size.width, geometry.size.height))
-            .background(Color.black.opacity(0.1))
-            .onDrop(of: [UTType.usdz], isTargeted: nil) { providers -> Bool in
-                guard let provider = providers.first else { return false }
-                provider.loadFileRepresentation(forTypeIdentifier: UTType.usdz.identifier) { url, error in
-                    guard let url = url else {
-                        print("No URL provided from drop")
-                        return
-                    }
-                    if let error = error {
-                        print("Error loading dropped file: \(error.localizedDescription)")
-                        return
+        }
+//        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(idealHeight: 0.8, alignment: .center)
+//        .onAppear {
+            // ...
+//        }
+        .onDrop(of: ["public.file-url"], isTargeted: nil, perform: handleDrop)
+    }
+
+    
+    
+    // MARK: - Functions
+    
+    func handleDrop(providers: [NSItemProvider]) -> Bool {
+        guard let provider = providers.first else { return false }
+        
+        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { (urlData, error) in
+            DispatchQueue.main.async {
+                if let urlData = urlData as? Data,
+                   let url = URL(dataRepresentation: urlData, relativeTo: nil),
+                   url.pathExtension.lowercased() == "usdz" {
+                    // Save the current camera state
+                    if let arView = arView as? InteractiveARView {
+                        self.cameraState = arView.getCameraState()
                     }
                     
-                    // Create a copy of the file in a temporary directory
-                    let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
-                    do {
-                        if FileManager.default.fileExists(atPath: tempURL.path) {
-                            try FileManager.default.removeItem(at: tempURL)
-                        }
-                        try FileManager.default.copyItem(at: url, to: tempURL)
-                        
-                        Task {
-                            await viewModel.loadModel(from: tempURL)
-                        }
-                    } catch {
-                        print("Error copying file: \(error.localizedDescription)")
-                    }
+                    // Update the usdzURL to load the new model
+                    self.usdzURL = url
                 }
-                return true
             }
         }
-        .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { value in
-                viewModel.handlePanGesture(translation: value.translation)
-            }
-        )
-        .onAppear {
-            NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
-                viewModel.handleScrollWheel(with: event)
-                return event
-            }
+        return true
+    }
+    
+
+}
+
+struct KeyHint: View {
+    
+    let symbol: String
+    let text: String
+    
+    var body: some View {
+        HStack {
+            Image(systemName: symbol)
+            Text(text)
         }
+        .font(.caption)
+        .foregroundColor(.white)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
     }
 }
 
 
-struct ARViewContainer: NSViewRepresentable {
-    let arView: ARView
-    
-    func makeNSView(context: Context) -> ARView {
-        return arView
-    }
-    
-    func updateNSView(_ nsView: ARView, context: Context) {}
-}
 
 #Preview {
     ContentView()
