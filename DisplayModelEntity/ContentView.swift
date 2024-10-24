@@ -56,7 +56,23 @@ struct ContentView: View {
                 ModelDetails(
                     filename: modelDimensions?.filename ?? "No model loaded",
                     height: modelDimensions?.height ?? 0,
-                    diameter: modelDimensions?.diameter ?? 0
+                    diameter: modelDimensions?.diameter ?? 0,
+                    onResetCamera: {
+                        if let arView = arView as? InteractiveARView {
+                            arView.resetCamera()
+                        }
+                    },
+                    onApplyPreset: { state in
+                        if let arView = arView as? InteractiveARView {
+                            arView.setCameraState(state)
+                        }
+                    },
+                    onSaveCurrentState: {
+                        if let arView = arView as? InteractiveARView {
+                            return arView.getCameraState()
+                        }
+                        return CameraState(radius: 6.0, azimuth: .pi/4, elevation: .pi/6, target: [0, 0, -2])
+                    }
                 )
                 .frame(width: 200)
             }

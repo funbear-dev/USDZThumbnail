@@ -12,6 +12,12 @@ struct ModelDetails: View {
     let height: Float
     let diameter: Float
     @AppStorage("saveCameraPosition") private var saveCameraPosition = false
+    @StateObject private var cameraManager = CameraStateManager.shared
+    @State private var showingNewPresetSheet = false
+    @State private var newPresetName = ""
+    let onResetCamera: () -> Void
+    let onApplyPreset: (CameraState) -> Void
+    let onSaveCurrentState: () -> CameraState
     
     @Environment(\.colorScheme) var colorScheme
     
@@ -21,8 +27,6 @@ struct ModelDetails: View {
             Group {
                 Text("Model Details")
                     .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
                 DetailItem(label: "Filename", value: filename)
                 DetailItem(label: "Height", value: String(format: "%.3f m", height))
                 DetailItem(label: "Diameter", value: String(format: "%.3f m", diameter))
@@ -30,21 +34,57 @@ struct ModelDetails: View {
             
             Spacer()
             
-            // Settings section
+            // Camera Settings section
             Group {
                 Divider()
-                
-                Text("Settings")
+                Text("Camera Settings")
                     .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 
-                Toggle("Save Camera Position", isOn: $saveCameraPosition)
+                // Camera presets
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(cameraManager.presets) { preset in
+                        HStack {
+                            Button(preset.name) {
+                                onApplyPreset(preset.state)
+                            }
+                            .buttonStyle(.link)
+                            
+                            Spacer()
+                            
+                            Button(role: .destructive) {
+                                cameraManager.removePreset(withId: preset.id)
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    
+                    Button("Save Current View...") {
+                        showingNewPresetSheet = true
+                    }
                     .font(.caption)
+                }
+                
+                Button("Reset Camera") {
+                    onResetCamera()
+                }
+                .font(.caption)
             }
         }
         .padding()
         .frame(maxHeight: .infinity)
         .background(colorScheme == .dark ? Color(nsColor: .darkGray) : Color(nsColor: .lightGray))
+        .sheet(isPresented: $showingNewPresetSheet) {
+            SavePresetView(
+                isPresented: $showingNewPresetSheet,
+                onSave: { name in
+                    let state = onSaveCurrentState()
+                    cameraManager.addPreset(name: name, state: state)
+                }
+            )
+        }
     }
 }
 
@@ -64,6 +104,6 @@ struct DetailItem: View {
     }
 }
 
-#Preview {
-    ModelDetails(filename: "test.usdz", height: 1.23, diameter: 0.13)
-}
+//#Preview {
+//    ModelDetails(filename: "test.usdz", height: 1.23, diameter: 0.13)
+//}
