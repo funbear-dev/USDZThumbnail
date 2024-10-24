@@ -108,7 +108,7 @@ class InteractiveARView: ARView {
     private func rotateCamera(deltaX: Float, deltaY: Float) {
         let sensitivity: Float = 0.005
         azimuth -= deltaX * sensitivity  // Keep negative for natural rotation
-        elevation -= deltaY * sensitivity // Keep positive for natural up/down
+        elevation += deltaY * sensitivity // Keep positive for natural up/down
         
         let maxElevation = Float.pi / 2 - 0.01
         let minElevation = -Float.pi / 2 + 0.01
