@@ -23,11 +23,10 @@ struct ContentView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                HStack(alignment: .top, spacing: 0) {
-                    // Main viewer area - use GeometryReader to calculate size
-                    let viewerWidth = geometry.size.width - 200 // Subtract details pane width
-                    let viewerSize = min(viewerWidth, geometry.size.height)
+            HStack(spacing: 0) {
+                // Main viewer area
+                GeometryReader { viewerGeometry in
+                    let viewerSize = min(viewerGeometry.size.width, viewerGeometry.size.height)
                     
                     ZStack {
                         if usdzURL != nil {
@@ -41,6 +40,18 @@ struct ContentView: View {
                             
                             ControlsOverlay()
                                 .frame(width: viewerSize, height: viewerSize)
+                            
+                            // Camera button positioned relative to the AR view
+                            VStack {
+                                Spacer()
+                                HStack {
+                                    Spacer()
+                                    CameraButton {
+                                        capturePhoto()
+                                    }
+                                }
+                            }
+                            .frame(width: viewerSize, height: viewerSize)
                         } else {
                             VStack {
                                 Spacer()
@@ -55,45 +66,32 @@ struct ContentView: View {
                         }
                     }
                     .frame(width: viewerSize, height: viewerSize)
-                    .background(Color(nsColor: .windowBackgroundColor))
-                    
-                    // Details pane
-                    ModelDetails(
-                        filename: modelDimensions?.filename ?? "No model loaded",
-                        height: modelDimensions?.height ?? 0,
-                        diameter: modelDimensions?.diameter ?? 0,
-                        onResetCamera: {
-                            if let arView = arView as? InteractiveARView {
-                                arView.resetCamera()
-                            }
-                        },
-                        onApplyPreset: { state in
-                            if let arView = arView as? InteractiveARView {
-                                arView.setCameraState(state)
-                            }
-                        },
-                        onSaveCurrentState: {
-                            if let arView = arView as? InteractiveARView {
-                                return arView.getCameraState()
-                            }
-                            return CameraState(radius: 6.0, azimuth: .pi/4, elevation: .pi/6, target: [0, 0, -2])
-                        }
-                    )
-                    .frame(width: 200)
+                    .position(x: viewerSize/2, y: viewerSize/2)
                 }
                 
-                // Camera button overlay
-                if usdzURL != nil {
-                    VStack {
-                        Spacer()
-                        HStack {
-//                            Spacer()
-                            CameraButton {
-                                capturePhoto()
-                            }
+                // Details pane
+                ModelDetails(
+                    filename: modelDimensions?.filename ?? "No model loaded",
+                    height: modelDimensions?.height ?? 0,
+                    diameter: modelDimensions?.diameter ?? 0,
+                    onResetCamera: {
+                        if let arView = arView as? InteractiveARView {
+                            arView.resetCamera()
                         }
+                    },
+                    onApplyPreset: { state in
+                        if let arView = arView as? InteractiveARView {
+                            arView.setCameraState(state)
+                        }
+                    },
+                    onSaveCurrentState: {
+                        if let arView = arView as? InteractiveARView {
+                            return arView.getCameraState()
+                        }
+                        return CameraState(radius: 6.0, azimuth: .pi/4, elevation: .pi/6, target: [0, 0, -2])
                     }
-                }
+                )
+                .frame(width: 200)
             }
         }
         .frame(minWidth: 800, minHeight: 600)
