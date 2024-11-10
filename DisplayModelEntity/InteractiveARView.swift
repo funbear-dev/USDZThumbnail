@@ -2,7 +2,7 @@
 //  InteractiveARView.swift
 //  ModelScreenShot2
 //
-//  Created by Stefano Rebulla on 20.10.2024.
+//  Created by funbear GmbH on 20.10.2024.
 //
 
 

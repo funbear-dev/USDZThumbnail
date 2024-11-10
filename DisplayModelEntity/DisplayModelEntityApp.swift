@@ -2,7 +2,7 @@
 //  DisplayModelEntityApp.swift
 //  DisplayModelEntity
 //
-//  Created by Stefano Rebulla on 21.10.2024.
+//  Created by funbear GmbH on 21.10.2024.
 //
 
 import SwiftUI

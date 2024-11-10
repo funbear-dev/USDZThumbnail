@@ -2,7 +2,7 @@
 //  SavePresetView.swift
 //  DisplayModelEntity
 //
-//  Created by Stefano Rebulla on 24.10.2024.
+//  Created by funbear GmbH on 24.10.2024.
 //
 
 import SwiftUI

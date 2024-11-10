@@ -2,7 +2,7 @@
 //  ModelDimensions.swift
 //  DisplayModelEntity
 //
-//  Created by Stefano Rebulla on 23.10.2024.
+//  Created by funbear GmbH on 23.10.2024.
 //
 
 import Foundation
