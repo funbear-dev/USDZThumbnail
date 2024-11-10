@@ -38,37 +38,11 @@ struct RealityKitView: NSViewRepresentable {
     func makeNSView(context: Context) -> ARView {
         let arViewInstance = InteractiveARView(frame: .zero)
         
-        // Set up default lighting
-        arViewInstance.environment.lighting.intensityExponent = 1.0
-        arViewInstance.environment.background = .color(.gray)
-        
-        // Add point light for better illumination
-        let pointLight = PointLight()
-        pointLight.light.intensity = 1000
-        pointLight.light.attenuationRadius = 100.0
-        pointLight.position = [0, 5, 0]
-        let pointLightAnchor = AnchorEntity(world: .zero)
-        pointLightAnchor.addChild(pointLight)
-        arViewInstance.scene.addAnchor(pointLightAnchor)
-        
-        // Add directional light for shadows and overall illumination
-        let directionalLight = DirectionalLight()
-        directionalLight.light.intensity = 2000
-        directionalLight.position = [2, 4, 2]
-        directionalLight.look(at: [0, 0, 0], from: directionalLight.position, relativeTo: nil)
-        
-        let lightAnchor = AnchorEntity(world: .zero)
-        lightAnchor.addChild(directionalLight)
-        arViewInstance.scene.addAnchor(lightAnchor)
+        // Default lighting setup
+        setupLighting(for: arViewInstance)
         
         DispatchQueue.main.async {
             self.arView = arViewInstance
-            
-            // Make the window key and make the view first responder
-            if let window = arViewInstance.window {
-                window.makeFirstResponder(arViewInstance)
-                window.makeKey()
-            }
         }
         
         return arViewInstance
@@ -82,14 +56,57 @@ struct RealityKitView: NSViewRepresentable {
             Task {
                 await context.coordinator.loadModel(into: arViewInstance, context: newURL)
                 context.coordinator.currentURL = newURL
-                
-                // Ensure window focus and first responder status after loading
-                await MainActor.run {
-                    if let window = nsView.window {
-                        window.makeFirstResponder(nsView)
-                        window.makeKey()
-                    }
+            }
+        }
+    }
+    
+    private func setupLighting(for arView: ARView) {
+        if let settings = try? JSONDecoder().decode(LightingSettings.self, from: UserDefaults.standard.data(forKey: "lightingSettings") ?? Data()) {
+            switch settings.type {
+            case .standard:
+                setupStandardLighting(for: arView)
+            case .skybox:
+                Task {
+                    await setupSkyboxLighting(for: arView)
                 }
+            }
+        } else {
+            setupStandardLighting(for: arView)
+        }
+    }
+    
+    private func setupStandardLighting(for arView: ARView) {
+        arView.environment.lighting.intensityExponent = 1.0
+        arView.environment.background = .color(.gray)
+        
+        let pointLight = PointLight()
+        pointLight.light.intensity = 1000
+        pointLight.light.attenuationRadius = 100.0
+        pointLight.position = [0, 5, 0]
+        let pointLightAnchor = AnchorEntity(world: .zero)
+        pointLightAnchor.addChild(pointLight)
+        arView.scene.addAnchor(pointLightAnchor)
+        
+        let directionalLight = DirectionalLight()
+        directionalLight.light.intensity = 2000
+        directionalLight.position = [2, 4, 2]
+        directionalLight.look(at: [0, 0, 0], from: directionalLight.position, relativeTo: nil)
+        
+        let lightAnchor = AnchorEntity(world: .zero)
+        lightAnchor.addChild(directionalLight)
+        arView.scene.addAnchor(lightAnchor)
+    }
+    
+    private func setupSkyboxLighting(for arView: ARView) async {
+        let skybox = "neuer_zollhof_4k"
+        if let skyboxResource = try? await EnvironmentResource.init(named: skybox) {
+            await MainActor.run {
+                arView.environment.lighting.resource = skyboxResource
+                arView.environment.background = .skybox(skyboxResource)
+            }
+        } else {
+            await MainActor.run {
+                arView.environment.background = .color(.gray)
             }
         }
     }

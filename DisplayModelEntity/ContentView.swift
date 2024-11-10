@@ -89,8 +89,10 @@ struct ContentView: View {
                             return arView.getCameraState()
                         }
                         return CameraState(radius: 6.0, azimuth: .pi/4, elevation: .pi/6, target: [0, 0, -2])
-                    }
+                    },
+                    currentModelURL: $usdzURL  // Pass the binding
                 )
+                
                 .frame(width: 200)
             }
         }

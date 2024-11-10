@@ -42,3 +42,23 @@ struct PhotoSettings: Codable {
         useHDR: true
     )
 }
+
+struct LightingSettings: Codable {
+    enum LightingType: String, CaseIterable, Identifiable, Codable {
+        case standard
+        case skybox
+        
+        var id: String { rawValue }
+        
+        var displayName: String {
+            switch self {
+            case .standard: return "Standard Lighting"
+            case .skybox: return "Environment Lighting"
+            }
+        }
+    }
+    
+    var type: LightingType
+    
+    static let defaultSettings = LightingSettings(type: .standard)
+}
