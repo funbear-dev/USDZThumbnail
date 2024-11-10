@@ -249,12 +249,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = DisplayModelEntity/DisplayModelEntity.entitlements;
+				CODE_SIGN_ENTITLEMENTS = USDZThumbnail/USDZThumbnail.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"DisplayModelEntity/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"USDZThumbnail/Preview Content\"";
 				DEVELOPMENT_TEAM = M4V7G62SY7;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -278,12 +278,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = DisplayModelEntity/DisplayModelEntity.entitlements;
+				CODE_SIGN_ENTITLEMENTS = USDZThumbnail/USDZThumbnail.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"DisplayModelEntity/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"USDZThumbnail/Preview Content\"";
 				DEVELOPMENT_TEAM = M4V7G62SY7;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
