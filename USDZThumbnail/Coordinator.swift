@@ -1,6 +1,6 @@
 //
 //  Coordinator.swift
-//  DisplayModelEntity
+//  USDZThumbnail
 //
 //  Created by funbear GmbH on 23.10.2024.
 //

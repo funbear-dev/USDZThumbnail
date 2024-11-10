@@ -1,6 +1,6 @@
 //
 //  PhotoSettings.swift
-//  DisplayModelEntity
+//  USDZThumbnail
 //
 //  Created by funbear GmbH on 24.10.2024.
 //

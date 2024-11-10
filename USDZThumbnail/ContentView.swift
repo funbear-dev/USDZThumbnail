@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  DisplayModelEntity
+//  USDZThumbnail
 //
 //  Created by funbear GmbH on 21.10.2024.
 //
